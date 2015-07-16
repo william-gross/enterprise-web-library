@@ -24,7 +24,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework.EnterpriseWebLibrary
 					new EwfTextBox( "", rows: 20 ),
 					validationGetter:
 						control =>
-						new Validation(
+						new EwfValidation(
 							( pbv, validator ) => emailText = validator.GetString( new ValidationErrorHandler( "text" ), control.GetPostBackValue( pbv ), false ),
 							pb ) ).ToControl() );
 

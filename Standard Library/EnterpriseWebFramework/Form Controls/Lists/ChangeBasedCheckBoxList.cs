@@ -48,7 +48,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 				checkBoxList,
 				cellSpan: cellSpan,
 				textAlignment: textAlignment,
-				validationGetter: control => new Validation(
+				validationGetter: control => new EwfValidation(
 					                             ( pbv, validator ) => {
 						                             if( validationPredicate != null && !validationPredicate() )
 							                             return;
@@ -95,7 +95,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 				checkBoxList,
 				cellSpan: cellSpan,
 				textAlignment: textAlignment,
-				validationGetter: control => new Validation(
+				validationGetter: control => new EwfValidation(
 					                             ( pbv, validator ) => {
 						                             if( validationPredicate != null && !validationPredicate() )
 							                             return;

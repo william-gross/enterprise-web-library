@@ -84,7 +84,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework.UserManagement {
 				new EwfTextBox( "" ),
 				validationGetter:
 					control =>
-					new Validation(
+					new EwfValidation(
 						( pbv, validator ) =>
 						emailAddress.Value =
 						validator.GetEmailAddress( new ValidationErrorHandler( ( v, ec ) => v.NoteErrorAndAddMessage( errorMessage ) ), control.GetPostBackValue( pbv ), false ),

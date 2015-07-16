@@ -52,7 +52,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 		private readonly List<FormValue> formValues = new List<FormValue>();
 		private readonly List<DisplayLink> displayLinks = new List<DisplayLink>();
 		private readonly List<UpdateRegionLinker> updateRegionLinkers = new List<UpdateRegionLinker>();
-		private readonly Dictionary<Validation, List<string>> modErrorDisplaysByValidation = new Dictionary<Validation, List<string>>();
+		private readonly Dictionary<EwfValidation, List<string>> modErrorDisplaysByValidation = new Dictionary<EwfValidation, List<string>>();
 		private readonly List<Action> controlTreeValidations = new List<Action>();
 		internal PostBack SubmitButtonPostBack;
 		private readonly List<Tuple<StatusMessageType, string>> statusMessages = new List<Tuple<StatusMessageType, string>>();
@@ -579,7 +579,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 		/// If you are using the results of this method to create controls, put them in a naming container so that when the controls differ before and after a
 		/// transfer, other parts of the page such as form control IDs do not get affected.
 		/// </summary>
-		internal IEnumerable<string> AddModificationErrorDisplayAndGetErrors( Control control, string keySuffix, Validation validation ) {
+		internal IEnumerable<string> AddModificationErrorDisplayAndGetErrors( Control control, string keySuffix, EwfValidation validation ) {
 			var key = control.UniqueID + keySuffix;
 			if( modErrorDisplaysByValidation.ContainsKey( validation ) )
 				modErrorDisplaysByValidation[ validation ].Add( key );
@@ -752,7 +752,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 			}
 		}
 
-		private void handleValidationErrors( Validation validation, IEnumerable<string> errorMessages ) {
+		private void handleValidationErrors( EwfValidation validation, IEnumerable<string> errorMessages ) {
 			if( !modErrorDisplaysByValidation.ContainsKey( validation ) || !errorMessages.Any() )
 				return;
 			foreach( var displayKey in modErrorDisplaysByValidation[ validation ] ) {

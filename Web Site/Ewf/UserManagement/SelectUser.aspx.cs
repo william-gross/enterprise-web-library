@@ -43,7 +43,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework.EnterpriseWebLibrary
 				FormItem.Create(
 					"User's email address (leave blank for anonymous)",
 					new EwfTextBox( "" ),
-					validationGetter: control => new Validation(
+					validationGetter: control => new EwfValidation(
 						                             ( pbv, validator ) => {
 							                             var errorHandler = new ValidationErrorHandler( "user" );
 							                             var emailAddress = validator.GetEmailAddress( errorHandler, control.GetPostBackValue( pbv ), true );
