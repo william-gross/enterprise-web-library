@@ -14,3 +14,5 @@ Generated Code
 Core/EnterpriseWebLibrary.xml
 
 Library/Files/*.xsd
+.hg
+*.DotSettings

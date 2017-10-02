@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<installationStandardConfiguration xmlns="http://redstapler.biz" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                   xsi:schemaLocation="http://redstapler.biz http://ewl.enterpriseweblibrary.org/ConfigurationSchemas/InstallationStandard">
+	<rsisInstallationId>1287</rsisInstallationId>
+	<administrators>
+		<administrator>
+			<Name>Sam Rueby</Name>
+			<EmailAddress>pleasedont@emailme.com</EmailAddress>
+		</administrator>
+	</administrators>
+	<installedInstallation>
+		<name>Live</name>
+		<shortName>Live</shortName>
+		<InstallationTypeConfiguration xsi:type="LiveInstallationConfiguration">
+			<WebApplications>
+				<Application>
+					<Name>Web Site</Name>
+					<DefaultBaseUrl>
+						<Host>ewl.enterpriseweblibrary.org</Host>
+					</DefaultBaseUrl>
+					<StandbyDefaultBaseUrl>
+						<Host>ewlstandby.enterpriseweblibrary.org</Host>
+					</StandbyDefaultBaseUrl>
+				</Application>
+			</WebApplications>
+		</InstallationTypeConfiguration>
+	</installedInstallation>
+</installationStandardConfiguration>
