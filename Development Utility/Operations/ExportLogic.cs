@@ -113,7 +113,7 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations {
 					!prerelease.HasValue || prerelease.Value ? installation.NextBuildNumber as int? : null,
 					localExportDateAndTime: localExportDateAndTime ) + "</version>" );
 			writer.WriteLine( "<title>" + installation.ExistingInstallationLogic.RuntimeConfiguration.SystemName + "</title>" );
-			writer.WriteLine( "<authors>William Gross, Greg Smalter, Sam Rueby</authors>" );
+			writer.WriteLine( "<authors>Sam Rueby</authors>" );
 			writer.WriteLine(
 				"<description>The {0} ({1}) is an extremely opinionated library for web applications that trades off performance, scalability, and development flexibility for an ease of maintenance you won't find anywhere else.</description>"
 					.FormatWith( EwlStatics.EwlName, EwlStatics.EwlInitialism ) );

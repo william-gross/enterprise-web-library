@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<installationStandardConfiguration xmlns="http://redstapler.biz" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://redstapler.biz file:///C:/Red%20Stapler%20Vault/Supporting%20Files/Standard%20Library/Standard%20Library/Configuration/Installation%20Standard.xsd">
+	<!--<rsisInstallationId>4</rsisInstallationId>-->
+	<administrators>
+		<administrator>
+			<Name>Sam Rueby</Name>
+			<EmailAddress>pleasedont@emailme.com</EmailAddress>
+		</administrator>
+	</administrators>
+</installationStandardConfiguration>

@@ -25,7 +25,7 @@
     <OldToolsVersion>4.0</OldToolsVersion>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <TargetFrameworkProfile />
-    <UseIISExpress>true</UseIISExpress>
+    <UseIISExpress>false</UseIISExpress>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\Standard Library\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <UpgradeBackupLocation>
