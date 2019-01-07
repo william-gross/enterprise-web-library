@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<systemDevelopmentConfiguration xmlns="http://redstapler.biz" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://redstapler.biz http://ewl.enterpriseweblibrary.org/ConfigurationSchemas/SystemDevelopment">
+	<LibraryNamespaceAndAssemblyName>RedStapler.StandardLibrary</LibraryNamespaceAndAssemblyName>
+	<webProjects>
+		<project>
+			<name>Web Site</name>
+			<NamespaceAndAssemblyName>EnterpriseWebLibrary.WebSite</NamespaceAndAssemblyName>
+		</project>
+	</webProjects>
+	<xmlSchemas>
+		<schema>
+			<project>Standard Library</project>
+			<pathInProject>Configuration\Installation Standard.xsd</pathInProject>
+			<namespace>RedStapler.StandardLibrary.Configuration.InstallationStandard</namespace>
+			<codeFileName>Installation Standard Configuration.cs</codeFileName>
+			<useSvcUtil>false</useSvcUtil>
+		</schema>
+		<schema>
+			<project>Standard Library</project>
+			<pathInProject>Configuration\Machine.xsd</pathInProject>
+			<namespace>RedStapler.StandardLibrary.Configuration.Machine</namespace>
+			<codeFileName>Machine Configuration.cs</codeFileName>
+			<useSvcUtil>false</useSvcUtil>
+		</schema>
+		<schema>
+			<project>Standard Library</project>
+			<pathInProject>Configuration\System Development.xsd</pathInProject>
+			<namespace>RedStapler.StandardLibrary.Configuration.SystemDevelopment</namespace>
+			<codeFileName>System Development Configuration.cs</codeFileName>
+			<useSvcUtil>false</useSvcUtil>
+		</schema>
+		<schema>
+			<project>Standard Library</project>
+			<pathInProject>Configuration\System General.xsd</pathInProject>
+			<namespace>RedStapler.StandardLibrary.Configuration.SystemGeneral</namespace>
+			<codeFileName>System General Configuration.cs</codeFileName>
+			<useSvcUtil>false</useSvcUtil>
+		</schema>
+		<schema>
+			<project>Standard Library</project>
+			<pathInProject>InstallationSupportUtility\RsisInterface\Messages\BuildMessage\Build.xsd</pathInProject>
+			<namespace>RedStapler.StandardLibrary.InstallationSupportUtility.RsisInterface.Messages.BuildMessage</namespace>
+			<codeFileName>Build Message.cs</codeFileName>
+			<useSvcUtil>true</useSvcUtil>
+		</schema>
+		<schema>
+			<project>Standard Library</project>
+			<pathInProject>InstallationSupportUtility\RsisInterface\Messages\SystemListMessage\System List.xsd</pathInProject>
+			<namespace>RedStapler.StandardLibrary.InstallationSupportUtility.RsisInterface.Messages.SystemListMessage</namespace>
+			<codeFileName>System List Message.cs</codeFileName>
+			<useSvcUtil>true</useSvcUtil>
+		</schema>
+	</xmlSchemas>
+</systemDevelopmentConfiguration>

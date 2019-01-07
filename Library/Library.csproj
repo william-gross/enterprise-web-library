@@ -81,7 +81,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Configuration\Aspose.Total.lic" />
     <None Include="Files\Template.config" />
   </ItemGroup>
   <ItemGroup>
