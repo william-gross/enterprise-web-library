@@ -519,7 +519,7 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration {
 		}
 
 		private static void writeGuidFormItemGetters( TextWriter writer, ModificationField field ) {
-			if( !field.TypeIs( typeof( Guid ) ) )
+			if( !field.TypeIs( typeof( Guid ) ) && !field.TypeIs( typeof( Guid? ) ) )
 				return;
 			writeNumberAsSelectListFormItemGetters( writer, field );
 		}
