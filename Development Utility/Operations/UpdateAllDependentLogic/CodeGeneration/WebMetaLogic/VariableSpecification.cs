@@ -61,7 +61,7 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration.WebM
 
 		private static bool isSupportedValueType( Type type ) {
 			return isSupportedIntegralType( type ) ||
-			       new[] { typeof( float ), typeof( double ), typeof( decimal ), typeof( bool ), typeof( DateTime ), typeof( DateTimeOffset ), typeof( TimeSpan ) }
+			       new[] { typeof( float ), typeof( double ), typeof( decimal ), typeof( bool ), typeof( DateTime ), typeof( DateTimeOffset ), typeof( TimeSpan ), typeof( Guid ) }
 				       .Contains( type ) || type.IsEnum;
 		}
 
