@@ -34,8 +34,8 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations {
 		}
 
 		void Operation.Execute( Installation genericInstallation, OperationResult operationResult ) {
-			IsuStatics.ConfigureIis( true );
-			Console.WriteLine( "Configured IIS Express." );
+			//IsuStatics.ConfigureIis( true );
+			//Console.WriteLine( "Configured IIS Express." );
 
 			// This block exists because of https://enduracode.kilnhg.com/Review/K164316.
 			try {
