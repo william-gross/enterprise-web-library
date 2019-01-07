@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using Microsoft.CSharp;
 using RedStapler.StandardLibrary;
 using RedStapler.StandardLibrary.InstallationSupportUtility;
+using Humanizer;
 
 namespace EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration.WebMetaLogic {
 	/// <summary>
@@ -115,14 +116,20 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration.WebM
 			if( IsString )
 				return valueExpression;
 
+			// We need special handling of Guid because casting doesn't work. Guid does not implement IConvertible
+			var typeOfNullableGuid = typeof( Guid? );
+			if( type == typeof( Guid ) || type == typeOfNullableGuid )
+				return ( ( type == typeOfNullableGuid ? @"{0} == """" ? ({1})null : " : "" ) + "Guid.Parse({0})" ).FormatWith( valueExpression, TypeName );
+
+
 			if( IsEnumerable ) {
 				return valueExpression + ".Separate( \",\", true ).Select( i => (" + normalizedElementTypeName + ")StandardLibraryMethods.ChangeType( i, typeof( " +
 				       normalizedElementTypeName + " ) ) ).ToArray()";
 			}
 
 			// For non-strings, coalesce empty string into null, because things like int? need to be null to change their type from string properly.
-			var expressionToConvert = valueExpression + " == \"\" ? null : " + valueExpression;
-			return "(" + TypeName + ")StandardLibraryMethods.ChangeType( " + expressionToConvert + ", typeof( " + TypeName + " ) )";
+			var expressionToConvert = valueExpression + @" == """" ? null : " + valueExpression;
+			return "({0})StandardLibraryMethods.ChangeType( {1}, typeof( {0} ) )".FormatWith( TypeName, expressionToConvert );
 		}
 
 		internal ModificationField GetModificationField() {
