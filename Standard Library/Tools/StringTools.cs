@@ -649,5 +649,15 @@ namespace RedStapler.StandardLibrary {
 		public static T FromJson<T>( this string json ) {
 			return new JavaScriptSerializer().Deserialize<T>( json );
 		}
+
+		/// <summary>
+		/// Converts the given byte array to Base64.
+		/// </summary>
+		public static string ToBase64( this byte[] b ) => Convert.ToBase64String( b );
+
+		/// <summary>
+		/// Converts the given Base64 string to a byte array.
+		/// </summary>
+		public static byte[] FromBase64( this string s ) => Convert.FromBase64String( s );
 	}
 }
