@@ -29,17 +29,17 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 		/// <summary>
 		/// Gets the HTML from the specified HTML block, after decoding intra site URIs.
 		/// </summary>
-		public static string GetHtml( int htmlBlockId ) {
+		public static string GetHtml( int htmlBlockId, string nonSecureBaseUrl = "", string secureBaseUrl = "" ) {
 			var html = SystemProvider.GetHtml( htmlBlockId );
-			return GetDecodedHtml( html );
+			return GetDecodedHtml( html, nonSecureBaseUrl: nonSecureBaseUrl, secureBaseUrl: secureBaseUrl );
 		}
 
 		/// <summary>
 		/// Decodes intra site URIs in the specified HTML and returns the result. Use this if you have retrieved HTML from the HTML blocks table without using
 		/// GetHtml.
 		/// </summary>
-		public static string GetDecodedHtml( string encodedHtml ) {
-			return decodeIntraSiteUris( encodedHtml );
+		public static string GetDecodedHtml( string encodedHtml, string nonSecureBaseUrl = "", string secureBaseUrl = "" ) {
+			return decodeIntraSiteUris( encodedHtml, nonSecureBaseUrl, secureBaseUrl );
 		}
 
 		/// <summary>
@@ -105,17 +105,23 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 			return html;
 		}
 
-		private static string decodeIntraSiteUris( string html ) {
-			foreach( var secure in new[] { true, false } ) {
-				// Any kind of relative URL could be a problem in an email message since there is no context. This is one reason we decode to absolute URLs.
-				//
-				// Our intra-site URI coding does not currently support multiple web applications in a system. If we want to support this, we should probably include
-				// the web app name or something in the prefix.
-				html = Regex.Replace(
-					html,
-					secure ? applicationRelativeSecureUrlPrefix : applicationRelativeNonSecureUrlPrefix,
-					ConfigurationStatics.InstallationConfiguration.WebApplications.Single().DefaultBaseUrl.GetUrlString( secure ) );
-			}
+		private static string decodeIntraSiteUris( string html, string nonSecureBaseUrl, string secureBaseUrl ) {
+			// Any kind of relative URL could be a problem in an email message since there is no context. This is one reason we decode to absolute URLs.
+			//
+			// Our intra-site URI coding does not currently support multiple web applications in a system. If we want to support this, we should probably include
+			// the web app name or something in the prefix.
+			html = Regex.Replace(
+				html,
+				applicationRelativeSecureUrlPrefix,
+				secureBaseUrl.Any() ? secureBaseUrl : ConfigurationStatics.InstallationConfiguration.WebApplications.Single().DefaultBaseUrl.GetUrlString( true ) );
+
+			html = Regex.Replace(
+				html,
+				applicationRelativeNonSecureUrlPrefix,
+				nonSecureBaseUrl.Any()
+					? nonSecureBaseUrl
+					: ConfigurationStatics.InstallationConfiguration.WebApplications.Single().DefaultBaseUrl.GetUrlString( false ) );
+
 			return html;
 		}
 	}
