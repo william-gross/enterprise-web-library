@@ -59,6 +59,7 @@
     <Compile Include="Generated Code\ISU.cs" />
     <Compile Include="Operations\ExportEwlToLocalFeed.cs" />
     <Compile Include="Operations\ExportLogic.cs" />
+    <Compile Include="Operations\ExportReleaseEwlToLocalPath.cs" />
     <Compile Include="Operations\GetLogicSize.cs" />
     <Compile Include="Operations\InstallAndStartServices.cs" />
     <Compile Include="Operations\StopAndUninstallServices.cs" />

@@ -16,8 +16,8 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations {
 	internal class ExportLogic: Operation {
 		private static readonly Operation instance = new ExportLogic();
 
-		internal static byte[] CreateEwlNuGetPackage( DevelopmentInstallation installation, bool useDebugAssembly, string outputFolderPath, bool? prerelease ) {
-			var localExportDateAndTime = prerelease.HasValue ? null as DateTime? : DateTime.Now;
+		internal static byte[] CreateEwlNuGetPackage( DevelopmentInstallation installation, bool useDebugAssembly, string outputFolderPath, bool prerelease ) {
+			var localExportDateAndTime = DateTime.Now;
 
 			IoMethods.ExecuteWithTempFolder(
 				folderPath => {
@@ -57,7 +57,7 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations {
 							installation.ExistingInstallationLogic.RuntimeConfiguration.ConfigurationFolderPath,
 							InstallationConfiguration.InstallationConfigurationFolderName,
 							InstallationConfiguration.InstallationsFolderName,
-							( !prerelease.HasValue || prerelease.Value ? "Testing" : "Live" ) ),
+							prerelease ? "Testing" : "Live" ),
 						StandardLibraryMethods.CombinePaths(
 							folderPath,
 							InstallationConfiguration.ConfigurationFolderName,
@@ -82,9 +82,7 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations {
 						outputFolderPath,
 						EwlNuGetPackageSpecificationStatics.GetNuGetPackageFileName(
 							installation.ExistingInstallationLogic.RuntimeConfiguration.SystemShortName,
-							installation.CurrentMajorVersion,
-							!prerelease.HasValue || prerelease.Value ? installation.NextBuildNumber as int? : null,
-							localExportDateAndTime: localExportDateAndTime ) ) );
+							prerelease, localExportDateAndTime ) ) );
 		}
 
 		private static void packageGeneralFiles( DevelopmentInstallation installation, string folderPath, bool includeDatabaseUpdates ) {
@@ -109,18 +107,15 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations {
 				IoMethods.CopyFolder( filesFolderInInstallationPath, StandardLibraryMethods.CombinePaths( folderPath, InstallationFileStatics.FilesFolderName ), false );
 		}
 
-		private static void writeNuGetPackageManifest( DevelopmentInstallation installation, bool? prerelease, DateTime? localExportDateAndTime, TextWriter writer ) {
+		private static void writeNuGetPackageManifest( DevelopmentInstallation installation, bool prerelease, DateTime localExportDateAndTime, TextWriter writer ) {
 			writer.WriteLine( "<?xml version=\"1.0\"?>" );
 			writer.WriteLine( "<package>" );
 			writer.WriteLine( "<metadata>" );
 			writer.WriteLine(
 				"<id>" + EwlNuGetPackageSpecificationStatics.GetNuGetPackageId( installation.ExistingInstallationLogic.RuntimeConfiguration.SystemShortName ) + "</id>" );
 			writer.WriteLine(
-				"<version>" +
-				EwlNuGetPackageSpecificationStatics.GetNuGetPackageVersionString(
-					installation.CurrentMajorVersion,
-					!prerelease.HasValue || prerelease.Value ? installation.NextBuildNumber as int? : null,
-					localExportDateAndTime: localExportDateAndTime ) + "</version>" );
+				"<version>" + EwlNuGetPackageSpecificationStatics.GetNuGetPackageVersionString( prerelease, localExportDateAndTime: localExportDateAndTime ) +
+				"</version>" );
 			writer.WriteLine( "<title>" + installation.ExistingInstallationLogic.RuntimeConfiguration.SystemName + "</title>" );
 			writer.WriteLine( "<authors>William Gross, Greg Smalter, Sam Rueby</authors>" );
 			writer.WriteLine(

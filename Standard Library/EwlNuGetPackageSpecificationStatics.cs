@@ -2,30 +2,21 @@
 
 namespace RedStapler.StandardLibrary {
 	/// <summary>
-	/// Standard Library and RSIS use only.
+	/// EWL and System Manager use only.
 	/// </summary>
 	public class EwlNuGetPackageSpecificationStatics {
 		/// <summary>
 		/// Specify the build number only for prereleases.
 		/// </summary>
-		public static string GetNuGetPackageFileName( string systemShortName, int majorVersion, int? buildNumber, DateTime? localExportDateAndTime = null ) {
-			return GetNuGetPackageId( systemShortName ) + "." + GetNuGetPackageVersionString( majorVersion, buildNumber, localExportDateAndTime: localExportDateAndTime ) +
-			       ".nupkg";
-		}
+		public static string GetNuGetPackageFileName( string systemShortName, bool prerelease, DateTime localExportDateAndTime ) =>
+			$"{GetNuGetPackageId( systemShortName )}.{GetNuGetPackageVersionString( prerelease, localExportDateAndTime: localExportDateAndTime )}.nupkg";
 
-		public static string GetNuGetPackageId( string systemShortName ) {
-			return systemShortName;
-		}
+		public static string GetNuGetPackageId( string systemShortName ) => systemShortName;
 
 		/// <summary>
 		/// Specify the build number only for prereleases.
 		/// </summary>
-		public static string GetNuGetPackageVersionString( int majorVersion, int? buildNumber, DateTime? localExportDateAndTime = null ) {
-			return majorVersion + ".0.0" +
-			       ( buildNumber.HasValue
-			         	? "-pr" + ( localExportDateAndTime.HasValue ? buildNumber.Value - 1 : buildNumber.Value ).ToString( "d5" ) +
-			         	  ( localExportDateAndTime.HasValue ? "-" + localExportDateAndTime.Value.ToString( "yyMMddHHmm" ) : "" )
-			         	: "" );
-		}
+		public static string GetNuGetPackageVersionString( bool prerelease, DateTime localExportDateAndTime ) =>
+			$"{localExportDateAndTime.Year}.{localExportDateAndTime.Month}.{localExportDateAndTime.Day}.{localExportDateAndTime.Hour * 10000 + localExportDateAndTime.Minute * 100 + localExportDateAndTime.Second}{( prerelease ? "-pr" : "" )}";
 	}
 }
