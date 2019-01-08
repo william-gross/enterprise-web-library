@@ -20,7 +20,7 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations {
 
 			var commandLine = Environment.GetCommandLineArgs();
 
-			if( commandLine.Length < 3 )
+			if( commandLine.Length <= 3 )
 				outputPath = StandardLibraryMethods.CombinePaths( ConfigurationStatics.RedStaplerFolderPath, "Local NuGet Feed" );
 			else
 				outputPath = commandLine.Last();
