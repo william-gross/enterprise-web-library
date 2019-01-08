@@ -15,7 +15,7 @@ namespace RedStapler.StandardLibrary.Email {
 
 		internal static void SendDeveloperNotificationEmail( EmailMessage message ) {
 			message.From = defaultFromEmailAddress;
-			message.ToAddresses.AddRange( getDeveloperEmailAddresses() );
+			message.ToAddresses.AddRange( GetDeveloperEmailAddresses() );
 			sendEmail( message, true );
 		}
 
@@ -90,7 +90,7 @@ namespace RedStapler.StandardLibrary.Email {
 				m.CustomHeaders.Add( Tuple.Create( InstallationIdHeaderFieldName, ConfigurationStatics.InstallationConfiguration.RsisInstallationId.Value.ToString() ) );
 			}
 			else {
-				m.ToAddresses.AddRange( getDeveloperEmailAddresses() );
+				m.ToAddresses.AddRange( GetDeveloperEmailAddresses() );
 				m.Subject = "[{0}] ".FormatWith( ConfigurationStatics.InstallationConfiguration.FullShortName ) + m.Subject;
 			}
 
@@ -164,7 +164,7 @@ namespace RedStapler.StandardLibrary.Email {
 		/// <summary>
 		/// Returns a list of developer email addresses.
 		/// </summary>
-		private static IEnumerable<EmailAddress> getDeveloperEmailAddresses() {
+		public static IEnumerable<EmailAddress> GetDeveloperEmailAddresses() {
 			return ConfigurationStatics.InstallationConfiguration.Developers.Select( i => new EmailAddress( i.EmailAddress, i.Name ) );
 		}
 
