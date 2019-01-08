@@ -346,11 +346,19 @@ namespace RedStapler.StandardLibrary {
 		/// <summary>
 		/// Returns the given string truncated to the given max length (if necessary).
 		/// </summary>
-		public static string Truncate( this string s, int maxLength ) {
+		/// <param name="s"></param>
+		/// <param name="maxLength"></param>
+		/// <param name="ellipsis">If longer than <paramref name="ellipsis"/>, adds '…'.
+		public static string Truncate( this string s, int maxLength, bool ellipsis = false ) {
 			if( s == null )
 				return null;
 
-			return s.Substring( 0, Math.Min( maxLength, s.Length ) );
+			if( s.Length > maxLength ) {
+				var substring = s.Substring( 0, maxLength );
+				return ellipsis ? substring + '…' : substring;
+			}
+
+			return s;
 		}
 
 		/// <summary>
