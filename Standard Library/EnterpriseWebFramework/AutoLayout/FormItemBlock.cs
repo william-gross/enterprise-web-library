@@ -27,7 +27,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 		// never support cell spanning.
 		public static FormItemBlock CreateFormItemList(
 			bool hideIfEmpty = false, string heading = "", int? numberOfColumns = null, int defaultFormItemCellSpan = 1,
-			TableCellVerticalAlignment verticalAlignment = TableCellVerticalAlignment.NotSpecified, IEnumerable<FormItem> formItems = null ) {
+			TableCellVerticalAlignment verticalAlignment = TableCellVerticalAlignment.Bottom, IEnumerable<FormItem> formItems = null ) {
 			return new FormItemBlock( hideIfEmpty, heading, true, numberOfColumns, defaultFormItemCellSpan, null, null, verticalAlignment, formItems );
 		}
 
