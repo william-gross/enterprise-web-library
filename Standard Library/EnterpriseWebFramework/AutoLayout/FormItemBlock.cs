@@ -21,22 +21,26 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 		/// <summary>
 		/// Creates a block with the given number of columns where each form item control's label is placed directly on top of it. NumberOfColumns defaults to the
 		/// sum of the cellspans of the given form items.
+		/// Button, if passed, should be a PostBackButton with a control style containing text, but the control style will be overridden with ButtonActionControlStyle.
+		/// By creating the button, you have control over its post back object and whether it uses submit behavior.
 		/// </summary>
 		// While this method shares numberOfColumns semantics with ControlList, it is fundamentally different because instead of dealing with plain old controls,
 		// this method deals with form items, which can span multiple cells. ControlList is designed to represent simple ordered and unordered lists and should
 		// never support cell spanning.
 		public static FormItemBlock CreateFormItemList(
 			bool hideIfEmpty = false, string heading = "", int? numberOfColumns = null, int defaultFormItemCellSpan = 1,
-			TableCellVerticalAlignment verticalAlignment = TableCellVerticalAlignment.Bottom, IEnumerable<FormItem> formItems = null ) {
-			return new FormItemBlock( hideIfEmpty, heading, true, numberOfColumns, defaultFormItemCellSpan, null, null, verticalAlignment, formItems );
+			TableCellVerticalAlignment verticalAlignment = TableCellVerticalAlignment.Bottom, IEnumerable<FormItem> formItems = null, PostBackButton button = null ) {
+			return new FormItemBlock( hideIfEmpty, heading, true, numberOfColumns, defaultFormItemCellSpan, null, null, verticalAlignment, formItems, button);
 		}
 
 		/// <summary>
 		/// Creates a block with a classic "label on the left, value on the right" layout.
+		/// Button, if passed, should be a PostBackButton with a control style containing text, but the control style will be overridden with ButtonActionControlStyle.
+		/// By creating the button, you have control over its post back object and whether it uses submit behavior.
 		/// </summary>
 		public static FormItemBlock CreateFormItemTable(
-			bool hideIfEmpty = false, string heading = "", Unit? firstColumnWidth = null, Unit? secondColumnWidth = null, IEnumerable<FormItem> formItems = null ) {
-			return new FormItemBlock( hideIfEmpty, heading, false, null, 1, firstColumnWidth, secondColumnWidth, TableCellVerticalAlignment.NotSpecified, formItems );
+			bool hideIfEmpty = false, string heading = "", Unit? firstColumnWidth = null, Unit? secondColumnWidth = null, IEnumerable<FormItem> formItems = null, PostBackButton button = null ) {
+			return new FormItemBlock( hideIfEmpty, heading, false, null, 1, firstColumnWidth, secondColumnWidth, TableCellVerticalAlignment.NotSpecified, formItems, button );
 		}
 
 		private readonly bool hideIfEmpty;
@@ -48,6 +52,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 		private readonly Unit? secondColumnWidth;
 		private readonly TableCellVerticalAlignment verticalAlignment;
 		private readonly List<FormItem> formItems;
+		private readonly PostBackButton button;
 
 		/// <summary>
 		/// Set this value in order to have a button added as the last form item and formatted automatically. The button will have the specified text.
@@ -55,11 +60,12 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 		/// NOTE: We have to decide if we are going to take a PostBackButton here, and if we do, if we will overwrite certain properties on it once we get it. Or, we may need to make
 		/// a special ButtonInfo object that has just the things we want (UseSubmitBehavior, Text, etc.).
 		/// </summary>
+		[ Obsolete( "Use button optional parameter on static constructors instead, and pay careful attention to what you use for UseSubmitBehavior and the postback object." ) ]
 		public string IncludeButtonWithThisText { get; set; }
 
 		private FormItemBlock(
 			bool hideIfEmpty, string heading, bool useFormItemListMode, int? numberOfColumns, int defaultFormItemCellSpan, Unit? firstColumnWidth,
-			Unit? secondColumnWidth, TableCellVerticalAlignment verticalAlignment, IEnumerable<FormItem> formItems ) {
+			Unit? secondColumnWidth, TableCellVerticalAlignment verticalAlignment, IEnumerable<FormItem> formItems, PostBackButton button) {
 			this.hideIfEmpty = hideIfEmpty;
 			this.heading = heading;
 			this.useFormItemListMode = useFormItemListMode;
@@ -69,6 +75,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 			this.secondColumnWidth = secondColumnWidth;
 			this.verticalAlignment = verticalAlignment;
 			this.formItems = ( formItems ?? new FormItem[ 0 ] ).ToList();
+			this.button = button;
 		}
 
 		/// <summary>
@@ -85,7 +92,16 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 			}
 
 			CssClass = CssClass.ConcatenateWithSpace( CssElementCreator.CssClass );
-			if( IncludeButtonWithThisText != null ) {
+
+			var theButton = button;
+#pragma warning disable 618 // Disables obsolete warning
+			if( IncludeButtonWithThisText != null )
+				theButton = new PostBackButton( EwfPage.Instance.DataUpdatePostBack, new ButtonActionControlStyle( IncludeButtonWithThisText ) );
+#pragma warning restore 618
+			if( theButton != null ) {
+				theButton.ActionControlStyle = new ButtonActionControlStyle( theButton.ActionControlStyle.Text );
+				theButton.Width = Unit.Percentage( 50 );
+
 				// We need to do logic to get the button to be on the right of the row.
 				if( useFormItemListMode && numberOfColumns.HasValue ) {
 					var widthOfLastRowWithButton = getFormItemRows( formItems, numberOfColumns.Value ).Last().Sum( fi => getCellSpan( fi ) ) + defaultFormItemCellSpan;
@@ -100,7 +116,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework {
 				formItems.Add(
 					FormItem.Create(
 						"",
-						new PostBackButton( EwfPage.Instance.DataUpdatePostBack, new ButtonActionControlStyle( IncludeButtonWithThisText ) ) { Width = Unit.Percentage( 50 ) },
+						theButton,
 						textAlignment: TextAlignment.Right,
 						cellSpan: defaultFormItemCellSpan ) );
 			}
