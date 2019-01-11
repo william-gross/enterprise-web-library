@@ -27,7 +27,7 @@ echo "`$packageId=$packageId"
 $searchTerm = if( $packageId -eq "Ewl" ) { "PackageId:$packageId" } else { $packageId }
 echo "`$searchTerm=$searchTerm"
 
-$packageVersion = "2019.1.8.110110";
+$packageVersion = "2019.1.11.93745-pr";
 echo "`$packageVersion=$packageVersion"
 
 echo "Creating a packages.config"
