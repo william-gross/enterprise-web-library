@@ -30,7 +30,7 @@ namespace RedStapler.StandardLibrary.Configuration {
 		public static MachineConfiguration MachineConfiguration { get; private set; }
 
 		internal static Assembly AppAssembly { get; private set; }
-		internal static InstallationConfiguration InstallationConfiguration { get; private set; }
+		public static InstallationConfiguration InstallationConfiguration { get; private set; }
 		private static Type globalInitializerType { get; set; }
 
 		/// <summary>

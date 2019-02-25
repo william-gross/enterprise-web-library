@@ -207,12 +207,12 @@ namespace RedStapler.StandardLibrary.Configuration {
 		/// <summary>
 		/// Gets the name of the installation.
 		/// </summary>
-		public string InstallationName { get { return isDevelopmentInstallation ? "Development" : installationStandardConfiguration.installedInstallation.name; } }
+		public string InstallationName { get { return IsDevelopmentInstallation ? "Development" : installationStandardConfiguration.installedInstallation.name; } }
 
 		/// <summary>
 		/// Gets the short name of the installation.
 		/// </summary>
-		public string InstallationShortName { get { return isDevelopmentInstallation ? "Dev" : installationStandardConfiguration.installedInstallation.shortName; } }
+		public string InstallationShortName { get { return IsDevelopmentInstallation ? "Dev" : installationStandardConfiguration.installedInstallation.shortName; } }
 
 		internal string CertificateEmailAddressOverride { get { return installationStandardConfiguration.CertificateEmailAddressOverride ?? ""; } }
 
@@ -276,7 +276,7 @@ namespace RedStapler.StandardLibrary.Configuration {
 		/// </summary>
 		public string[] WebSiteNames {
 			get {
-				return ( isDevelopmentInstallation || installationStandardConfiguration.installedInstallation.webSiteNames == null )
+				return ( IsDevelopmentInstallation || installationStandardConfiguration.installedInstallation.webSiteNames == null )
 					       ? new string[ 0 ]
 					       : installationStandardConfiguration.installedInstallation.webSiteNames;
 			}
@@ -287,7 +287,7 @@ namespace RedStapler.StandardLibrary.Configuration {
 		/// </summary>
 		public InstallationType InstallationType {
 			get {
-				if( isDevelopmentInstallation )
+				if( IsDevelopmentInstallation )
 					return InstallationType.Development;
 				bool isLive;
 				if( installationStandardConfiguration.installedInstallation.InstallationTypeConfiguration != null )
@@ -298,7 +298,7 @@ namespace RedStapler.StandardLibrary.Configuration {
 			}
 		}
 
-		private bool isDevelopmentInstallation { get { return systemDevelopmentConfiguration != null; } }
+		public bool IsDevelopmentInstallation { get { return systemDevelopmentConfiguration != null; } }
 
 		public SystemDevelopment.SystemDevelopmentConfiguration SystemDevelopmentConfiguration { get { return systemDevelopmentConfiguration; } }
 
