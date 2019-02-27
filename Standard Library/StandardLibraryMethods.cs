@@ -296,14 +296,19 @@ namespace RedStapler.StandardLibrary {
 			if( GetCSharpKeywords().Contains( desiredIdentifierName ) )
 				return "@" + desiredIdentifierName;
 
-			desiredIdentifierName = desiredIdentifierName.Replace( "-", "_" );
-			desiredIdentifierName = desiredIdentifierName.Replace( " ", "_" );
+			const char replaceChar = '_';
 
-			int dummyInt;
-			if( Int32.TryParse( desiredIdentifierName.Truncate( 1 ), out dummyInt ) )
-				return "_" + desiredIdentifierName;
+			var sb = new StringBuilder( desiredIdentifierName );
+			sb.Replace( '-', replaceChar );
+			sb.Replace( ' ', replaceChar );
+			sb.Replace( '.', replaceChar );
 
-			return desiredIdentifierName;
+			if( char.IsDigit( desiredIdentifierName[ 0 ] ) ) {
+				sb.Remove( 0, 1 );
+				sb.Insert( 0, replaceChar );
+			}
+
+			return sb.ToString();
 		}
 
 		public static string GetCSharpSafeClassName( string desiredClassName ) {
