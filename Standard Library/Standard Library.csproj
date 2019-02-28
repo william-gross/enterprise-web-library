@@ -56,9 +56,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Aspose.Pdf.9.3.0\lib\net40-client\Aspose.Pdf.dll</HintPath>
     </Reference>
-    <Reference Include="Aspose.Words, Version=14.5.0.0, Culture=neutral, PublicKeyToken=716fcc553a201e56, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Aspose.Words.14.5.0\lib\net3.5-client\Aspose.Words.dll</HintPath>
+    <Reference Include="Aspose.Words, Version=19.2.0.0, Culture=neutral, PublicKeyToken=716fcc553a201e56, processorArchitecture=MSIL">
+      <HintPath>..\packages\Aspose.Words.19.2.0\lib\net40\Aspose.Words.dll</HintPath>
     </Reference>
     <Reference Include="ClosedXML, Version=0.72.3.0, Culture=neutral, PublicKeyToken=fd1eb21b62ae805b, processorArchitecture=MSIL">
       <HintPath>..\packages\ClosedXML.0.72.3\lib\net40-client\ClosedXML.dll</HintPath>

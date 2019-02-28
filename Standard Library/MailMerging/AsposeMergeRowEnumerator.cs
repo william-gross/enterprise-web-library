@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Aspose.Words.Reporting;
+using Aspose.Words.MailMerging;
 using RedStapler.StandardLibrary.MailMerging.RowTree;
 
 namespace RedStapler.StandardLibrary.MailMerging {
