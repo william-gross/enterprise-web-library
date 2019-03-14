@@ -29,7 +29,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework.EnterpriseWebLibrary
 					"Re-type new password",
 					new EwfTextBox( "", masksCharacters: true ),
 					validationGetter: control => new EwfValidation( ( pbv, v ) => newPasswordConfirm.Value = control.GetPostBackValue( pbv ), pb ) ) );
-			pb.AddTopValidationMethod( ( pbv, validator ) => FormsAuthStatics.ValidatePassword( validator, newPassword, newPasswordConfirm ) );
+			pb.AddTopValidationMethod( ( pbv, validator ) => FormsAuthStatics.ValidatePassword( validator, newPassword, newPasswordConfirm, AppTools.User.UserId ) );
 
 			ph.AddControlsReturnThis( fib );
 			EwfUiStatics.SetContentFootActions( new ActionButtonSetup( "Change Password", new PostBackButton( pb ) ) );

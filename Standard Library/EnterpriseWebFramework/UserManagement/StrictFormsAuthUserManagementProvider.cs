@@ -19,6 +19,6 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework.UserManagement {
 		/// <summary>
 		/// Validates the specified password. Called when a user changes their password.
 		/// </summary>
-		void ValidatePassword( Validator validator, string password );
+		void ValidatePassword( Validator validator, string password, int? userId );
 	}
 }

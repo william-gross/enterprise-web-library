@@ -59,13 +59,13 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework.UserManagement {
 		/// <summary>
 		/// Ensures that the specified data values contain identical, valid password values.
 		/// </summary>
-		public static void ValidatePassword( Validator validator, DataValue<string> password, DataValue<string> passwordAgain ) {
+		public static void ValidatePassword( Validator validator, DataValue<string> password, DataValue<string> passwordAgain, int? userId = null ) {
 			if( password.Value != passwordAgain.Value )
 				validator.NoteErrorAndAddMessage( "Passwords do not match." );
 			else {
 				var strictProvider = SystemProvider as StrictFormsAuthUserManagementProvider;
 				if( strictProvider != null )
-					strictProvider.ValidatePassword( validator, password.Value );
+					strictProvider.ValidatePassword( validator, password.Value, userId );
 				else if( password.Value.Length < 7 )
 					validator.NoteErrorAndAddMessage( "Passwords must be at least 7 characters long." );
 			}

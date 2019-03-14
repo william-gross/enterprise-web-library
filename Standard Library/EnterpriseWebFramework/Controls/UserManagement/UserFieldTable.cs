@@ -105,7 +105,7 @@ namespace RedStapler.StandardLibrary.EnterpriseWebFramework.Controls {
 						                             ( pbv, validator ) => {
 							                             if( !validationShouldRun() || !control.IsCheckedInPostBack( pbv ) )
 								                             return;
-							                             FormsAuthStatics.ValidatePassword( validator, newPassword, confirmPassword );
+							                             FormsAuthStatics.ValidatePassword( validator, newPassword, confirmPassword, userId );
 							                             var p = new Password( newPassword.Value );
 							                             Salt = p.Salt;
 							                             SaltedPassword = p.ComputeSaltedHash();
