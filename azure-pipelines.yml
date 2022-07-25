@@ -23,7 +23,7 @@ steps:
     command: 'restore'
     restoreSolution: '**/Core/packages.config'
     feedsToUse: 'select'
-    restoreDirectory: '$(System.DefaultWorkingDirectory)'
+    packagesdirectory: '$(System.DefaultWorkingDirectory)'
 - task: DotNetCoreCLI@2
   inputs:
     command: 'build'
