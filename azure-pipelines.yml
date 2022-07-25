@@ -20,10 +20,8 @@ steps:
     workingDirectory: 'Solution Files\'
 - task: NuGetCommand@2
   inputs:
-    command: 'restore'
-    restoreSolution: '**/Core/packages.config'
-    feedsToUse: 'select'
-    packagesdirectory: '$(System.DefaultWorkingDirectory)'
+    command: 'custom'
+    arguments: 'restore "/Core/packages.config" -PackagesDirectory  "$(System.DefaultWorkingDirectory)"'
 - task: DotNetCoreCLI@2
   inputs:
     command: 'build'
