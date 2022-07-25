@@ -21,7 +21,7 @@ steps:
 - task: NuGetCommand@2
   inputs:
     command: 'custom'
-    arguments: 'restore "/Core/packages.config" -PackagesDirectory  "$(System.DefaultWorkingDirectory)"'
+    arguments: 'restore "Core/packages.config" -PackagesDirectory "$(System.DefaultWorkingDirectory)"'
 - task: DotNetCoreCLI@2
   inputs:
     command: 'build'
