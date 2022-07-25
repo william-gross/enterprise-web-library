@@ -17,7 +17,7 @@ steps:
   inputs:
     filePath: 'Update Dependent Logic.ps1'
     failOnStderr: true
-    workingDirectory: Solution Files\
+    workingDirectory: 'Solution Files\'
 - task: DotNetCoreCLI@2
   inputs:
     command: 'build'
