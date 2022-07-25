@@ -18,10 +18,10 @@ steps:
     filePath: 'Solution Files\Update Dependent Logic.ps1'
     failOnStderr: true
     workingDirectory: 'Solution Files\'
-- task: DotNetCoreCLI@2
+- task: NuGetCommand@2
   inputs:
     command: 'restore'
-    projects: '**/Core.csproj'
+    restoreSolution: '**/Core.csproj'
     feedsToUse: 'select'
 - task: DotNetCoreCLI@2
   inputs:
