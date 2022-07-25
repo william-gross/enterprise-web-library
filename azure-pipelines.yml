@@ -10,9 +10,6 @@ pool:
   vmImage: windows-latest
 
 steps:
-- task: CmdLine@2
-  inputs:
-    script: 'dir "D:/a/1/s/"'
 - task: PowerShell@2
   inputs:
     filePath: 'Solution Files\Update Dependent Logic.ps1'
@@ -22,6 +19,9 @@ steps:
   inputs:
     command: 'custom'
     arguments: 'restore "Core/packages.config" -PackagesDirectory "$(System.DefaultWorkingDirectory)"'
+- task: CmdLine@2
+  inputs:
+    script: 'dir "D:/a/1/s/"'
 - task: DotNetCoreCLI@2
   inputs:
     command: 'build'
