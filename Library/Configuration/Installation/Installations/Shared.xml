@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<InstallationSharedConfiguration xmlns="http://enterpriseweblibrary.org">
+	<IntermediateLogInPassword>password</IntermediateLogInPassword>
+	<EmailDefaultFromName>William Gross</EmailDefaultFromName>
+	<EmailDefaultFromAddress>william@wgross.net</EmailDefaultFromAddress>
+</InstallationSharedConfiguration>

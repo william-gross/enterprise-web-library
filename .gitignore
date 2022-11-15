@@ -16,3 +16,8 @@ Core/EnterpriseWebLibrary.xml
 Library/Files/*.xsd
 .hg
 *.DotSettings
+
+web.config
+Directory.Build.props
+launchSettings.json
+*.ewlt.cs
