@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <installationStandardConfiguration xmlns="http://redstapler.biz" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                                    xsi:schemaLocation="http://redstapler.biz http://ewl.enterpriseweblibrary.org/ConfigurationSchemas/InstallationStandard">
-	<rsisInstallationId>1287</rsisInstallationId>
 	<administrators>
 		<administrator>
 			<Name>Sam Rueby</Name>
@@ -12,15 +11,19 @@
 		<name>Live</name>
 		<shortName>Live</shortName>
 		<InstallationTypeConfiguration xsi:type="LiveInstallationConfiguration">
+			<EmailSendingService xsi:type="SendGrid">
+				<ApiKey>your-send-grid-api-key</ApiKey>
+			</EmailSendingService>
 			<WebApplications>
 				<Application>
 					<Name>Web Site</Name>
-					<DefaultBaseUrl>
-						<Host>ewl.enterpriseweblibrary.org</Host>
-					</DefaultBaseUrl>
-					<StandbyDefaultBaseUrl>
-						<Host>ewlstandby.enterpriseweblibrary.org</Host>
-					</StandbyDefaultBaseUrl>
+					<IisApplication xsi:type="Site">
+						<HostNames>
+							<HostName>
+								<Name>ewl.example.com</Name>
+							</HostName>
+						</HostNames>
+					</IisApplication>
 				</Application>
 			</WebApplications>
 		</InstallationTypeConfiguration>
