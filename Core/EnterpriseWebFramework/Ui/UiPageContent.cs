@@ -234,7 +234,7 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 			if( AppRequestState.Instance.UserAccessible ) {
 				var changePasswordPage = new ChangePassword( PageBase.Current.GetUrl() );
 				if( changePasswordPage.UserCanAccessResource && AppTools.User != null )
-					userInfo.Add( new GenericFlowContainer( getUserInfo( changePasswordPage ), classes: userInfoClass ) );
+					userInfo.Add( new GenericFlowContainer( getUserInfoComponents( changePasswordPage ), classes: userInfoClass ) );
 			}
 
 			return new GenericFlowContainer(
@@ -260,7 +260,7 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 			return new GenericFlowContainer( appLogo.ToCollection(), classes: appLogoAndUserInfoClass );
 		}
 
-		private IReadOnlyCollection<FlowComponent> getUserInfoComponents() {
+		private IReadOnlyCollection<FlowComponent> getUserInfoComponents( PageBase changePasswordPage ) {
 			var components = new List<FlowComponent>();
 
 			components.Add( new Paragraph( $"Logged in as {AppTools.User.Email}".ToComponents() ) );
