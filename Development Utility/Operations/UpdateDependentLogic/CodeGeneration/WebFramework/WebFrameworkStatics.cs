@@ -1,25 +1,14 @@
 using System.Collections.Immutable;
 using System.Text;
-using System.Text.RegularExpressions;
 using EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration.WebFramework.WebItems;
-using Humanizer;
 using Tewl.IO;
-using Tewl.Tools;
 
 namespace EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration.WebFramework {
 	internal static class WebFrameworkStatics {
-		private static StringBuilder legacyUrlStatics;
-		private static List<string> aspxFilePaths;
-
 		internal static void Generate(
 			TextWriter writer, string projectPath, string projectNamespace, bool projectContainsFramework, IEnumerable<string> ignoredFolderPaths,
-			string staticFilesFolderPath, string staticFilesFolderUrlParentExpression ) {
-			var legacyUrlStaticsFilePath = EwlStatics.CombinePaths( projectPath, "LegacyUrlStatics.cs" );
-			if( File.Exists( legacyUrlStaticsFilePath ) && File.ReadAllText( legacyUrlStaticsFilePath ).Length == 0 ) {
-				legacyUrlStatics = new StringBuilder();
-				aspxFilePaths = new List<string>();
-			}
-
+			string staticFilesFolderPath, string staticFilesFolderUrlParentExpression, out Action<string> resourceSerializationWriter ) {
+			var allResources = new List<( WebItemGeneralData entitySetup, WebItemGeneralData resource )>();
 			generateForFolder(
 				writer,
 				projectPath,
@@ -28,18 +17,98 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration.WebF
 				ignoredFolderPaths.ToImmutableHashSet( StringComparer.Ordinal ),
 				staticFilesFolderPath,
 				staticFilesFolderUrlParentExpression,
-				"" );
+				"",
+				allResources );
 
-			if( legacyUrlStatics != null ) {
-				File.WriteAllText( legacyUrlStaticsFilePath, legacyUrlStatics.ToString(), Encoding.UTF8 );
-				foreach( var i in aspxFilePaths )
-					File.Delete( i );
-			}
+			resourceSerializationWriter = interfaceName => {
+				string getString( WebItemGeneralData resource ) =>
+					"\"{0}.{1}\"".FormatWith( resource.Namespace, resource.ClassName ).Replace( "@", "", StringComparison.Ordinal );
+
+				string getIdentifier( WebItemGeneralData resource ) =>
+					( resource.Namespace.Replace( "_", "__", StringComparison.Ordinal ).Replace( ".", "_", StringComparison.Ordinal ) + "_" + resource.ClassName )
+					.Replace( "@", "", StringComparison.Ordinal );
+
+				writer.WriteLine(
+					"{0}( string name, string parameters )? {1}SerializeResource( ResourceBase resource ) => resource switch {{".FormatWith(
+						interfaceName.Length > 0 ? "" : "public static ",
+						interfaceName.AppendDelimiter( "." ) ) );
+				foreach( var (_, resource) in allResources )
+					writer.WriteLine( "{0} r => ( {1}, serialize_{2}( r ) ),".FormatWith( resource.FullClassName, getString( resource ), getIdentifier( resource ) ) );
+				writer.WriteLine( "_ => null" );
+				writer.WriteLine( "};" );
+				writer.WriteLine();
+				writer.WriteLine(
+					"{0}ResourceBase {1}DeserializeResource( string name, string parameters ) => name switch {{".FormatWith(
+						interfaceName.Length > 0 ? "" : "public static ",
+						interfaceName.AppendDelimiter( "." ) ) );
+				foreach( var (_, resource) in allResources )
+					writer.WriteLine( "{0} => deserialize_{1}( parameters ),".FormatWith( getString( resource ), getIdentifier( resource ) ) );
+				writer.WriteLine( "_ => null" );
+				writer.WriteLine( "};" );
+
+				var methodPrefix = interfaceName.Length > 0 ? "private" : "private static";
+				foreach( var (entitySetup, resource) in allResources ) {
+					writer.WriteLine();
+					writer.WriteLine( "{0} string serialize_{1}( {2} resource ) {{".FormatWith( methodPrefix, getIdentifier( resource ), resource.FullClassName ) );
+
+					string getMember( WebItemParameter parameter, string objectName ) =>
+						"new JProperty( \"{0}\", {1}.{2} == null ? JValue.CreateNull() : JToken.FromObject( {1}.{2} ) )".FormatWith(
+							parameter.Name,
+							objectName,
+							parameter.PropertyName );
+					var members = StringTools.ConcatenateWithDelimiter(
+						", ",
+						( entitySetup != null ? entitySetup.RequiredParameters.Concat( entitySetup.OptionalParameters ) : Enumerable.Empty<WebItemParameter>() )
+						.Select( i => getMember( i, "resource.Es" ) )
+						.Concat( resource.RequiredParameters.Concat( resource.OptionalParameters ).Select( i => getMember( i, "resource" ) ) ) );
+
+					if( members.Length > 0 ) {
+						writer.WriteLine( "#pragma warning disable CS0472" );
+						writer.WriteLine( "var jsonObject = new JObject( {0} );".FormatWith( members ) );
+						writer.WriteLine( "#pragma warning restore CS0472" );
+
+						writer.WriteLine( "return jsonObject.ToString( Formatting.None );" );
+					}
+					else
+						writer.WriteLine( "return \"\";" );
+					writer.WriteLine( "}" );
+
+					writer.WriteLine( "{0} ResourceBase deserialize_{1}( string parameters ) {{".FormatWith( methodPrefix, getIdentifier( resource ) ) );
+
+					string getParameter( WebItemParameter parameter ) => "jsonObject[ \"{0}\" ].ToObject<{1}>()".FormatWith( parameter.Name, parameter.TypeName );
+					var arguments = StringTools.ConcatenateWithDelimiter(
+							", ",
+							( entitySetup != null ? entitySetup.RequiredParameters : Enumerable.Empty<WebItemParameter>() ).Concat( resource.RequiredParameters )
+							.Select( getParameter )
+							.Append(
+								StringTools.ConcatenateWithDelimiter(
+										" ",
+										( entitySetup != null ? entitySetup.OptionalParameters : Enumerable.Empty<WebItemParameter>() ).Select(
+											i => "s.{0} = {1};".FormatWith( i.PropertyName, getParameter( i ) ) ) )
+									.Surround( "entitySetupOptionalParameterSetter: ( s, _ ) => { ", " }" ) )
+							.Append(
+								StringTools.ConcatenateWithDelimiter(
+										" ",
+										resource.OptionalParameters.Select( i => "s.{0} = {1};".FormatWith( i.PropertyName, getParameter( i ) ) ) )
+									.Surround( "optionalParameterSetter: ( s, {0} ) => {{ ".FormatWith( entitySetup != null ? "_, _" : "_" ), " }" ) ) )
+						.Surround( " ", " " );
+
+					if( arguments.Length > 0 )
+						writer.WriteLine( "var jsonObject = JsonConvert.DeserializeObject<JObject>( parameters );" );
+					writer.WriteLine(
+						"return {0};".FormatWith(
+							resource.IsResource()
+								? "{0}.GetInfo({1})".FormatWith( resource.FullClassName, arguments )
+								: "new {0}({1})".FormatWith( resource.FullClassName, arguments ) ) );
+					writer.WriteLine( "}" );
+				}
+			};
 		}
 
 		private static void generateForFolder(
 			TextWriter writer, string projectPath, string projectNamespace, bool projectContainsFramework, ImmutableHashSet<string> ignoredFolderPaths,
-			string staticFilesFolderPath, string staticFilesFolderUrlParentExpression, string folderPathRelativeToProject ) {
+			string staticFilesFolderPath, string staticFilesFolderUrlParentExpression, string folderPathRelativeToProject,
+			List<( WebItemGeneralData entitySetup, WebItemGeneralData resource )> allResources ) {
 			if( ignoredFolderPaths.Contains( folderPathRelativeToProject ) )
 				return;
 
@@ -51,7 +120,8 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration.WebF
 					projectContainsFramework,
 					null,
 					folderPathRelativeToProject,
-					staticFilesFolderUrlParentExpression );
+					staticFilesFolderUrlParentExpression,
+					allResources );
 				return;
 			}
 
@@ -71,145 +141,15 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration.WebF
 				entitySetup.GenerateCode( writer );
 			}
 
-			if( legacyUrlStatics != null ) {
-				var files = new List<WebItemGeneralData>();
-				foreach( var fileName in IoMethods.GetFileNamesInFolder( folderPath, searchPattern: "*.aspx" ).OrderBy( i => i ) ) {
-					var filePath = EwlStatics.CombinePaths( projectPath, folderPathRelativeToProject, fileName );
-
-					var aspxLines = File.ReadAllLines( filePath );
-					if( aspxLines.Length != 1 || !Regex.IsMatch( aspxLines[ 0 ], "^<%@ .+ %>$" ) )
-						throw new Exception( "Invalid ASPX file: \"{0}\"".FormatWith( EwlStatics.CombinePaths( folderPathRelativeToProject, fileName ) ) );
-
-					var newCsLines = new List<string>();
-					var pageNeeded = true;
-					foreach( var line in File.ReadAllLines( EwlStatics.CombinePaths( projectPath, folderPathRelativeToProject, fileName + ".cs" ) ) ) {
-						if( pageNeeded && !line.StartsWith( "using " ) ) {
-							newCsLines.Add( "" );
-							newCsLines.Add( "// EwlPage" );
-							pageNeeded = false;
-						}
-						newCsLines.Add( line.Replace( ": EwfPage {", " {" ).Replace( ": EwfPage,", ":" ) );
-					}
-					var newCsFilePath = EwlStatics.CombinePaths( folderPathRelativeToProject, Path.GetFileNameWithoutExtension( fileName ) + ".cs" );
-					File.WriteAllText(
-						EwlStatics.CombinePaths( projectPath, newCsFilePath ),
-						newCsLines.Aggregate( ( text, line ) => text + Environment.NewLine + line ),
-						Encoding.UTF8 );
-					files.Add( new WebItemGeneralData( projectPath, projectNamespace, newCsFilePath, false ) );
-
-					aspxFilePaths.Add( filePath );
-					aspxFilePaths.Add( filePath + ".cs" );
-					aspxFilePaths.Add( filePath + ".designer.cs" );
-				}
-
-				const string folderSetupClassName = "LegacyUrlFolderSetup";
-				var childPatterns = files.Select(
-						file =>
-							"new UrlPattern( encoder => encoder is {0}.UrlEncoder ? EncodingUrlSegment.Create( {1} ) : null, url => string.Equals( url.Segment, {1}, StringComparison.OrdinalIgnoreCase ) ? new {0}.UrlDecoder() : null )"
-								.FormatWith( file.ClassName, "\"{0}.aspx\"".FormatWith( Path.GetFileNameWithoutExtension( file.FileName ) ) ) )
-					.Concat(
-						IoMethods.GetFolderNamesInFolder( folderPath )
-							.Where(
-								subfolderName => {
-									var subfolderPath = EwlStatics.CombinePaths( folderPathRelativeToProject, subfolderName );
-									if( subfolderPath == "bin" || subfolderPath == "obj" )
-										return false;
-
-									bool folderContainsAspxFiles( string path ) =>
-										IoMethods.GetFileNamesInFolder( path, searchPattern: "*.aspx" ).Any() || IoMethods.GetFolderNamesInFolder( path )
-											.Any( i => folderContainsAspxFiles( EwlStatics.CombinePaths( path, i ) ) );
-									return folderContainsAspxFiles( EwlStatics.CombinePaths( projectPath, subfolderPath ) );
-								} )
-							.Select(
-								subfolderName => "{0}.{1}.UrlPatterns.Literal( \"{2}\" )".FormatWith(
-									WebItemGeneralData.GetNamespaceFromPath( projectNamespace, EwlStatics.CombinePaths( folderPathRelativeToProject, subfolderName ), false )
-										.Separate( ".", false )
-										.Last(),
-									folderSetupClassName,
-									subfolderName ) ) )
-					.Materialize();
-
-				if( folderPathRelativeToProject.Length == 0 ) {
-					legacyUrlStatics.AppendLine( "using System;" );
-					legacyUrlStatics.AppendLine( "using System.Collections.Generic;" );
-					legacyUrlStatics.AppendLine( "using EnterpriseWebLibrary.EnterpriseWebFramework;" );
-					legacyUrlStatics.AppendLine();
-					legacyUrlStatics.AppendLine( "namespace {0} {{".FormatWith( projectNamespace ) );
-					legacyUrlStatics.AppendLine( "internal static class LegacyUrlStatics {" );
-					legacyUrlStatics.AppendLine( "public static IReadOnlyCollection<UrlPattern> GetPatterns() {" );
-					legacyUrlStatics.AppendLine( "var patterns = new List<UrlPattern>();" );
-					foreach( var i in childPatterns )
-						legacyUrlStatics.AppendLine( "patterns.Add( {0} );".FormatWith( i ) );
-					legacyUrlStatics.AppendLine( "return patterns;" );
-					legacyUrlStatics.AppendLine( "}" );
-					legacyUrlStatics.AppendLine( "public static UrlHandler GetParent() => new YourRootHandler();" );
-					legacyUrlStatics.AppendLine( "}" );
-					legacyUrlStatics.Append( "}" );
-				}
-				else if( childPatterns.Any() ) {
-					var folderSetup = new StringBuilder();
-					folderSetup.AppendLine( "using System;" );
-					folderSetup.AppendLine( "using System.Collections.Generic;" );
-					folderSetup.AppendLine( "using EnterpriseWebLibrary.EnterpriseWebFramework;" );
-					folderSetup.AppendLine();
-					folderSetup.AppendLine( "// EwlResource" );
-					folderSetup.AppendLine();
-					var folderNamespace = WebItemGeneralData.GetNamespaceFromPath( projectNamespace, folderPathRelativeToProject, false );
-					folderSetup.AppendLine( "namespace {0} {{".FormatWith( folderNamespace ) );
-					folderSetup.AppendLine( "partial class {0} {{".FormatWith( folderSetupClassName ) );
-
-					var namespaces = folderNamespace.Substring( projectNamespace.Length + ".".Length ).Separate( ".", false );
-					folderSetup.AppendLine(
-						"protected override UrlHandler getUrlParent() => {0};".FormatWith(
-							namespaces.Count == 1
-								? "LegacyUrlStatics.GetParent()"
-								: "new {0}.{1}()".FormatWith( namespaces[ namespaces.Count - 2 ], folderSetupClassName ) ) );
-
-					folderSetup.AppendLine( "protected override ConnectionSecurity ConnectionSecurity => ConnectionSecurity.MatchingCurrentRequest;" );
-
-					folderSetup.AppendLine( "protected override IEnumerable<UrlPattern> getChildUrlPatterns() {" );
-					folderSetup.AppendLine( "var patterns = new List<UrlPattern>();" );
-					foreach( var i in childPatterns )
-						folderSetup.AppendLine( "patterns.Add( {0} );".FormatWith( i ) );
-					folderSetup.AppendLine( "return patterns;" );
-					folderSetup.AppendLine( "}" );
-
-					folderSetup.AppendLine( "}" );
-					folderSetup.Append( "}" );
-					Directory.CreateDirectory( EwlStatics.CombinePaths( projectPath, folderPathRelativeToProject, "Legacy URLs" ) );
-					File.WriteAllText(
-						EwlStatics.CombinePaths( projectPath, folderPathRelativeToProject, "Legacy URLs", "{0}.cs".FormatWith( folderSetupClassName ) ),
-						folderSetup.ToString(),
-						Encoding.UTF8 );
-				}
-
-				foreach( var file in files ) {
-					var parentCode = new StringBuilder();
-					parentCode.AppendLine();
-					parentCode.AppendLine();
-					parentCode.AppendLine( "namespace {0} {{".FormatWith( file.Namespace ) );
-					parentCode.AppendLine( "partial class {0} {{".FormatWith( file.ClassName ) );
-					parentCode.AppendLine(
-						"protected override UrlHandler getUrlParent() => {0};".FormatWith(
-							folderPathRelativeToProject.Length == 0 ? "LegacyUrlStatics.GetParent()" : "new {0}()".FormatWith( folderSetupClassName ) ) );
-					parentCode.AppendLine( "}" );
-					parentCode.Append( "}" );
-					File.AppendAllText( EwlStatics.CombinePaths( projectPath, file.PathRelativeToProject ), parentCode.ToString(), Encoding.UTF8 );
-				}
-			}
-
 			// Generate code for files in the current folder.
 			foreach( var fileName in IoMethods.GetFileNamesInFolder( folderPath ).OrderBy( i => i ) ) {
-				if( legacyUrlStatics != null &&
-				    aspxFilePaths.Any( i => i.EqualsIgnoreCase( EwlStatics.CombinePaths( projectPath, folderPathRelativeToProject, fileName ) ) ) )
-					continue;
-
 				if( Path.GetExtension( fileName ).ToLowerInvariant() != ".cs" )
 					continue;
 				var generalData = new WebItemGeneralData( projectPath, projectNamespace, EwlStatics.CombinePaths( folderPathRelativeToProject, fileName ), false );
 				if( !generalData.IsResource() )
 					continue;
 				new Resource( projectContainsFramework, generalData, entitySetup ).GenerateCode( writer );
+				allResources.Add( ( entitySetup?.GeneralData, generalData ) );
 			}
 
 			// Delve into sub folders.
@@ -225,13 +165,14 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration.WebF
 					ignoredFolderPaths,
 					staticFilesFolderPath,
 					staticFilesFolderUrlParentExpression,
-					subFolderPath );
+					subFolderPath,
+					allResources );
 			}
 		}
 
 		private static void generateStaticFileLogic(
 			TextWriter writer, string projectPath, string projectNamespace, bool inFramework, bool? inVersionedFolder, string folderPathRelativeToProject,
-			string folderParentExpression ) {
+			string folderParentExpression, List<( WebItemGeneralData entitySetup, WebItemGeneralData resource )> allResources ) {
 			var isRootFolder = !inVersionedFolder.HasValue;
 			var folderPath = EwlStatics.CombinePaths( projectPath, folderPathRelativeToProject );
 
@@ -264,8 +205,10 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration.WebF
 								subfolderName ) ) )
 					.Materialize() );
 
-			foreach( var file in files )
+			foreach( var file in files ) {
 				new StaticFile( file, inFramework, inVersionedFolder == true, folderSetupClassName ).GenerateCode( writer );
+				allResources.Add( ( null, file ) );
+			}
 
 			var staticFilesFolderPath = inFramework
 				                            ? EnterpriseWebFramework.StaticFile.FrameworkStaticFilesSourceFolderPath
@@ -288,7 +231,8 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration.WebF
 					inFramework,
 					inVersionedFolder ?? subfolderName == "versioned",
 					EwlStatics.CombinePaths( folderPathRelativeToProject, subfolderName ),
-					"new {0}.{1}()".FormatWith( folderNamespace.Separate( ".", false ).Last(), folderSetupClassName ) );
+					"new {0}.{1}()".FormatWith( folderNamespace.Separate( ".", false ).Last(), folderSetupClassName ),
+					allResources );
 		}
 
 		private static void generateStaticFileFolderSetup(
@@ -312,7 +256,7 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration.WebF
 				"",
 				Enumerable.Empty<WebItemParameter>().Materialize(),
 				Enumerable.Empty<WebItemParameter>().Materialize(),
-				p => "true",
+				_ => "true",
 				false );
 			writer.WriteLine(
 				"protected override IEnumerable<UrlPattern> getChildUrlPatterns() => {0};".FormatWith(
@@ -338,15 +282,14 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations.CodeGeneration.WebF
 			if( File.Exists( EwlStatics.CombinePaths( folderPath, className + ".cs" ) ) )
 				return;
 
-			using( var writer = new StreamWriter( templateFilePath, false, Encoding.UTF8 ) ) {
-				writer.WriteLine( "namespace {0} {{".FormatWith( itemNamespace ) );
-				writer.WriteLine( "	partial class {0} {{".FormatWith( className ) );
-				writer.WriteLine(
-					"		// IMPORTANT: Change extension from \"{0}\" to \".cs\" before including in project and editing.".FormatWith(
-						DataAccess.DataAccessStatics.CSharpTemplateFileExtension ) );
-				writer.WriteLine( "	}" );
-				writer.WriteLine( "}" );
-			}
+			using var writer = new StreamWriter( templateFilePath, false, Encoding.UTF8 );
+			writer.WriteLine( "namespace {0} {{".FormatWith( itemNamespace ) );
+			writer.WriteLine( "	partial class {0} {{".FormatWith( className ) );
+			writer.WriteLine(
+				"		// IMPORTANT: Change extension from \"{0}\" to \".cs\" before including in project and editing.".FormatWith(
+					DataAccess.DataAccessStatics.CSharpTemplateFileExtension ) );
+			writer.WriteLine( "	}" );
+			writer.WriteLine( "}" );
 		}
 
 		internal static string GetParameterDeclarations( IReadOnlyCollection<WebItemParameter> parameters ) {

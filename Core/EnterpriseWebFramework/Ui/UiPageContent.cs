@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using EnterpriseWebLibrary.Configuration;
+﻿using EnterpriseWebLibrary.Configuration;
 using EnterpriseWebLibrary.EnterpriseWebFramework.Ui;
 using EnterpriseWebLibrary.EnterpriseWebFramework.UserManagement;
 using EnterpriseWebLibrary.EnterpriseWebFramework.UserManagement.Pages;
 using EnterpriseWebLibrary.UserManagement;
-using Humanizer;
 using JetBrains.Annotations;
-using Tewl.Tools;
 
 namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 	public class UiPageContent: PageContent {
@@ -152,7 +147,7 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 
 		private readonly BasicPageContent basicContent;
 		private readonly EntityUiSetup entityUiSetup;
-		private readonly List<FlowComponent> content = new List<FlowComponent>();
+		private readonly List<FlowComponent> content = new();
 
 		/// <summary>
 		/// Creates a page content object that uses the EWF user interface.
@@ -169,7 +164,7 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 			bool omitContentBox = false, IReadOnlyCollection<ActionComponentSetup> pageActions = null, IReadOnlyCollection<ButtonSetup> contentFootActions = null,
 			IReadOnlyCollection<FlowComponent> contentFootComponents = null, Action dataUpdateModificationMethod = null, bool isAutoDataUpdater = false,
 			ActionPostBack pageLoadPostBack = null ) {
-			pageActions = pageActions ?? Enumerable.Empty<ActionComponentSetup>().Materialize();
+			pageActions ??= Enumerable.Empty<ActionComponentSetup>().Materialize();
 			if( contentFootActions != null && contentFootComponents != null )
 				throw new ApplicationException( "Either contentFootActions or contentFootComponents may be specified, but not both." );
 			if( contentFootActions == null && contentFootComponents == null )
@@ -265,7 +260,7 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 			return new GenericFlowContainer( appLogo.ToCollection(), classes: appLogoAndUserInfoClass );
 		}
 
-		private IReadOnlyCollection<FlowComponent> getUserInfo( PageBase changePasswordPage ) {
+		private IReadOnlyCollection<FlowComponent> getUserInfoComponents() {
 			var components = new List<FlowComponent>();
 
 			components.Add( new Paragraph( $"Logged in as {AppTools.User.Email}".ToComponents() ) );

@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Threading.Tasks;
 using EnterpriseWebLibrary.Configuration;
 using EnterpriseWebLibrary.Configuration.InstallationStandard;
 using EnterpriseWebLibrary.Configuration.SystemDevelopment;
@@ -317,15 +318,20 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations {
 			build.MajorVersion = installation.CurrentMajorVersion;
 			build.BuildNumber = installation.NextBuildNumber;
 
-			var hgOutput = Directory.Exists( EwlStatics.CombinePaths( installation.GeneralLogic.Path, AppStatics.MercurialRepositoryFolderName ) )
-				               ? TewlContrib.ProcessTools.RunProgram(
-						               @"C:\Program Files\TortoiseHg\hg",
-						               "--debug identify --id \"{0}\"".FormatWith( installation.GeneralLogic.Path ),
-						               "",
-						               true )
-					               .Trim()
-				               : "";
-			build.HgChangesetId = hgOutput.Length == 40 ? hgOutput : "";
+			if( Directory.Exists( EwlStatics.CombinePaths( installation.GeneralLogic.Path, AppStatics.MercurialRepositoryFolderName ) ) ) {
+				var hgOutput = TewlContrib.ProcessTools.RunProgram(
+						@"C:\Program Files\TortoiseHg\hg",
+						"--debug identify --id \"{0}\"".FormatWith( installation.GeneralLogic.Path ),
+						"",
+						true )
+					.Trim();
+				build.ChangesetId = hgOutput.Length == 40 ? hgOutput : "";
+			}
+			else if( Directory.Exists( EwlStatics.CombinePaths( installation.GeneralLogic.Path, AppStatics.GitRepositoryFolderName ) ) )
+				build.ChangesetId = TewlContrib.ProcessTools.RunProgram( "git", "rev-parse --verify HEAD", "", true );
+			else
+				build.ChangesetId = "";
+			build.HgChangesetId = "";
 
 			var serverSideLogicFolderPath = EwlStatics.CombinePaths( logicPackagesFolderPath, "Server Side Logic" );
 			packageWebApps( installation, serverSideLogicFolderPath );
@@ -359,8 +365,8 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations {
 					        installation.ExistingInstallationLogic.RuntimeConfiguration.ConfigurationFolderPath,
 					        InstallationConfiguration.InstallationConfigurationFolderName,
 					        InstallationConfiguration.InstallationsFolderName ) ) )
-				if( !new[] { InstallationConfiguration.DevelopmentInstallationFolderName, AppStatics.MercurialRepositoryFolderName }.Contains(
-					    Path.GetFileName( installationConfigurationFolderPath ) ) ) {
+				if( !new[] { InstallationConfiguration.DevelopmentInstallationFolderName, AppStatics.MercurialRepositoryFolderName, AppStatics.GitRepositoryFolderName }
+					    .Contains( Path.GetFileName( installationConfigurationFolderPath ) ) ) {
 					var buildMessageInstallation = new InstallationSupportUtility.SystemManagerInterface.Messages.BuildMessage.Installation();
 
 					// Do not perform schema validation since the schema file on disk may not match this version of the ISU.
@@ -399,21 +405,16 @@ namespace EnterpriseWebLibrary.DevelopmentUtility.Operations {
 			build.SystemId = recognizedInstallation.KnownSystemLogic.RsisSystem.Id;
 
 			operationResult.TimeSpentWaitingForNetwork = EwlStatics.ExecuteTimedRegion(
-				delegate {
-					using( var memoryStream = new MemoryStream() ) {
-						// Understand that by doing this, we are not really taking advantage of streaming, but at least it will be easier to do it the right way some day (probably by implementing our own BuildMessageStream)
-						XmlOps.SerializeIntoStream( build, memoryStream );
-						memoryStream.Position = 0;
-
-						SystemManagerConnectionStatics.ExecuteIsuServiceMethod(
-							channel => channel.UploadBuild(
-								new InstallationSupportUtility.SystemManagerInterface.Messages.BuildUploadMessage
-									{
-										AuthenticationKey = SystemManagerConnectionStatics.AccessToken, BuildDocument = memoryStream
-									} ),
-							"build upload" );
-					}
-				} );
+				() => SystemManagerConnectionStatics.ExecuteActionWithSystemManagerClient(
+					"build upload",
+					client => Task.Run(
+							async () => {
+								using var content = HttpClientTools.GetRequestContentFromWriter( stream => XmlOps.SerializeIntoStream( build, stream ) );
+								using var response = await client.PostAsync( SystemManagerConnectionStatics.BuildsUrlSegment, content );
+								response.EnsureSuccessStatusCode();
+							} )
+						.Wait(),
+					supportLargePayload: true ) );
 		}
 
 		private void packageWebApps( DevelopmentInstallation installation, string serverSideLogicFolderPath ) {

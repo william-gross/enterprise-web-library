@@ -1,10 +1,10 @@
-﻿using EnterpriseWebLibrary.Configuration;
+﻿using System.Net.Http;
+using System.Threading.Tasks;
+using EnterpriseWebLibrary.Configuration;
 using EnterpriseWebLibrary.InstallationSupportUtility.DatabaseAbstraction;
 using EnterpriseWebLibrary.InstallationSupportUtility.InstallationModel;
 using EnterpriseWebLibrary.InstallationSupportUtility.SystemManagerInterface.Messages.SystemListMessage;
 using EnterpriseWebLibrary.IO;
-using Humanizer;
-using Tewl;
 using Tewl.IO;
 
 namespace EnterpriseWebLibrary.InstallationSupportUtility {
@@ -119,15 +119,22 @@ namespace EnterpriseWebLibrary.InstallationSupportUtility {
 		private static string getDownloadedPackagesFolderPath() => EwlStatics.CombinePaths( ConfigurationStatics.EwlFolderPath, "Downloaded Data Packages" );
 
 		private static long downloadDataPackage( RsisInstallation installation, string packageZipFilePath ) {
-			using( var fileWriteStream = IoMethods.GetFileStreamForWrite( packageZipFilePath ) ) {
-				SystemManagerConnectionStatics.ExecuteIsuServiceMethod(
-					channel => {
-						using( var networkStream = channel.DownloadDataPackage( SystemManagerConnectionStatics.AccessToken, installation.Id ) )
-							networkStream.CopyTo( fileWriteStream );
-					},
-					"data package download" );
-				return fileWriteStream.Length;
-			}
+			using var fileWriteStream = IoMethods.GetFileStreamForWrite( packageZipFilePath );
+
+			SystemManagerConnectionStatics.ExecuteActionWithSystemManagerClient(
+				"data package download",
+				client => Task.Run(
+						async () => {
+							using var response = await client.GetAsync(
+								                     $"{SystemManagerConnectionStatics.InstallationsUrlSegment}/{installation.Id}/{SystemManagerConnectionStatics.DataPackageUrlSegment}",
+								                     HttpCompletionOption.ResponseHeadersRead );
+							response.EnsureSuccessStatusCode();
+							await ( await response.Content.ReadAsStreamAsync() ).CopyToAsync( fileWriteStream );
+						} )
+					.Wait(),
+				supportLargePayload: true );
+
+			return fileWriteStream.Length;
 		}
 
 		/// <summary>

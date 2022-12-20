@@ -6,12 +6,10 @@ using EnterpriseWebLibrary.DataAccess;
 using EnterpriseWebLibrary.EnterpriseWebFramework.UserManagement;
 using EnterpriseWebLibrary.UserManagement;
 using EnterpriseWebLibrary.WebSessionState;
-using Humanizer;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NodaTime;
 using StackExchange.Profiling;
-using Tewl.Tools;
 
 namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 	/// <summary>
@@ -29,6 +27,8 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 		private static Func<Func<Func<PageContent>, PageContent>, Func<string>, Func<string>, ( PageContent basicContent, FlowComponent component, FlowComponent
 				etherealContainer, FlowComponent jsInitElement, Action dataUpdateModificationMethod, bool isAutoDataUpdater, ActionPostBack pageLoadPostBack )>
 			contentGetter;
+
+		private static Action requestStateRefresher;
 
 		[ JsonObject( ItemRequired = Required.Always, MemberSerialization = MemberSerialization.Fields ) ]
 		private class HiddenFieldData {
@@ -72,7 +72,7 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 		internal static void Init(
 			( Func<Action>, Func<string> ) appProvider,
 			Func<Func<Func<PageContent>, PageContent>, Func<string>, Func<string>, ( PageContent, FlowComponent, FlowComponent, FlowComponent, Action, bool,
-				ActionPostBack )> contentGetter ) {
+				ActionPostBack )> contentGetter, Action requestStateRefresher ) {
 			EwfValidation.Init(
 				() => Current.formState.ValidationPredicate,
 				() => Current.formState.DataModifications,
@@ -115,8 +115,10 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 							"If the data-update modification is included, it is meaningless to include any full post-backs since these inherently update the page's data." );
 				},
 				dataModification => dataModification == Current.dataUpdate ? Current.dataUpdatePostBack : (ActionPostBack)dataModification );
+
 			PageBase.appProvider = appProvider;
 			PageBase.contentGetter = contentGetter;
+			PageBase.requestStateRefresher = requestStateRefresher;
 		}
 
 		/// <summary>
@@ -225,27 +227,29 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 					finally {
 						DataAccessState.Current.ResetCache();
 					}
-				}
 
-				// Re-create page object. A big reason to do this is that some pages execute database queries or other code during initialization in order to prime the
-				// data-access cache. The code above resets the cache and we want to re-prime it right away.
-				PageBase newPageObject;
-				using( MiniProfiler.Current.Step( "EWF - Re-create page object after page-view data modifications" ) )
-					newPageObject = (PageBase)ReCreate();
-				bool urlChanged;
-				using( MiniProfiler.Current.Step( "EWF - Check URL after page-view data modifications" ) )
-					urlChanged = newPageObject.GetUrl( false, false ) != GetUrl( false, false );
-				if( urlChanged )
-					throw getPossibleDeveloperMistakeException( "The URL of the page changed after page-view data modifications." );
-				bool userAuthorized;
-				using( MiniProfiler.Current.Step( "EWF - Check page authorization after page-view data modifications" ) )
-					userAuthorized = newPageObject.UserCanAccessResource;
-				DisabledResourceMode disabledMode;
-				using( MiniProfiler.Current.Step( "EWF - Check alternative page mode after page-view data modifications" ) )
-					disabledMode = newPageObject.AlternativeMode as DisabledResourceMode;
-				if( !userAuthorized || disabledMode != null )
-					throw getPossibleDeveloperMistakeException( "The user lost access to the page or the page became disabled after page-view data modifications." );
-				return ( nextPageObject = newPageObject ).processSecondaryOperationAndGetResponse( statusCode );
+					requestStateRefresher();
+
+					// Re-create page object. A big reason to do this is that some pages execute database queries or other code during initialization in order to prime
+					// the data-access cache. The code above resets the cache and we want to re-prime it right away.
+					PageBase newPageObject;
+					using( MiniProfiler.Current.Step( "EWF - Re-create page object after page-view data modifications" ) )
+						newPageObject = (PageBase)ReCreate();
+					bool urlChanged;
+					using( MiniProfiler.Current.Step( "EWF - Check URL after page-view data modifications" ) )
+						urlChanged = newPageObject.GetUrl( false, false ) != GetUrl( false, false );
+					if( urlChanged )
+						throw getPossibleDeveloperMistakeException( "The URL of the page changed after page-view data modifications." );
+					bool userAuthorized;
+					using( MiniProfiler.Current.Step( "EWF - Check page authorization after page-view data modifications" ) )
+						userAuthorized = newPageObject.UserCanAccessResource;
+					DisabledResourceMode disabledMode;
+					using( MiniProfiler.Current.Step( "EWF - Check alternative page mode after page-view data modifications" ) )
+						disabledMode = newPageObject.AlternativeMode as DisabledResourceMode;
+					if( !userAuthorized || disabledMode != null )
+						throw getPossibleDeveloperMistakeException( "The user lost access to the page or the page became disabled after page-view data modifications." );
+					return ( nextPageObject = newPageObject ).processSecondaryOperationAndGetResponse( statusCode );
+				}
 			}
 
 			return processSecondaryOperationAndGetResponse( statusCode );
@@ -262,9 +266,15 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 					.ToImmutableDictionary( i => i.keyedLinker.key );
 				var updateRegions = requestState.UpdateRegionKeysAndArguments.Select(
 					keyAndArg => {
-						if( !nodeUpdateRegionLinkersByKey.TryGetValue( keyAndArg.Item1, out var nodeLinker ) )
-							throw getPossibleDeveloperMistakeException( "An update region linker with the key \"{0}\" does not exist.".FormatWith( keyAndArg.Item1 ) );
-						return ( nodeLinker.node, nodeLinker.keyedLinker.linker.PostModificationRegionGetter( keyAndArg.Item2 ) );
+						if( !nodeUpdateRegionLinkersByKey.TryGetValue( keyAndArg.key, out var nodeLinker ) )
+							throw getPossibleDeveloperMistakeException(
+								"An update region linker with the key \"{0}\" does not exist. The post-back included {1}; the page contains {2}.".FormatWith(
+									keyAndArg.key,
+									StringTools.GetEnglishListPhrase( requestState.UpdateRegionKeysAndArguments.Select( i => $"\"{i.key}\"" ), true ),
+									nodeUpdateRegionLinkersByKey.Any()
+										? StringTools.GetEnglishListPhrase( nodeUpdateRegionLinkersByKey.Select( i => $"\"{i.Key}\"" ), true )
+										: "no linkers" ) );
+						return ( nodeLinker.node, nodeLinker.keyedLinker.linker.PostModificationRegionGetter( keyAndArg.arg ) );
 					} );
 
 				var staticRegionContents = getStaticRegionContents( updateRegions );
@@ -297,7 +307,7 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 
 						if( navigationNeeded ) {
 							requestState.DmIdAndSecondaryOp = Tuple.Create( dmIdAndSecondaryOp.Item1, SecondaryPostBackOperation.NoOperation );
-							requestState.SetStaticAndUpdateRegionState( getStaticRegionContents( null ).contents, new Tuple<string, string>[ 0 ] );
+							requestState.SetStaticAndUpdateRegionState( getStaticRegionContents( null ).contents, Enumerable.Empty<( string, string )>().Materialize() );
 						}
 					} );
 				if( navigationNeeded )
@@ -460,6 +470,8 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 						finally {
 							DataAccessState.Current.ResetCache();
 						}
+
+						requestStateRefresher();
 					}
 
 					if( postBack.IsIntermediate ) {
@@ -479,7 +491,7 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 							actionPostBack.ValidationDm == lastPostBackFailingDm ? SecondaryPostBackOperation.Validate : SecondaryPostBackOperation.ValidateChangesOnly );
 						requestState.SetStaticAndUpdateRegionState(
 							staticRegionContents.contents,
-							updateRegions.Select( i => Tuple.Create( i.key, i.region.ArgumentGetter() ) ).Materialize() );
+							updateRegions.Select( i => ( i.key, i.region.ArgumentGetter() ) ).Materialize() );
 					}
 					else
 						AppRequestState.Instance.EwfPageRequestState = new EwfPageRequestState( AppRequestState.RequestTime, null, null );
@@ -610,6 +622,7 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 				elementJsInitStatements,
 				appProvider.javaScriptDocumentReadyFunctionCallGetter().AppendDelimiter( ";" ),
 				javaScriptDocumentReadyFunctionCall.AppendDelimiter( ";" ),
+				"addSpeculationRules();",
 				StringTools.ConcatenateWithDelimiter( " ", scrollStatement, modificationErrorsOccurred ? "" : pageLoadActionStatements, clientSideNavigationStatements )
 					.PrependDelimiter( "window.onload = function() { " )
 					.AppendDelimiter( " };" ) );
@@ -681,7 +694,9 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 					throw;
 				AppRequestState.Instance.EwfPageRequestState.FocusKey = "";
 				AppRequestState.Instance.EwfPageRequestState.GeneralModificationErrors = dmException.HtmlMessages;
-				AppRequestState.Instance.EwfPageRequestState.SetStaticAndUpdateRegionState( getStaticRegionContents( null ).contents, new Tuple<string, string>[ 0 ] );
+				AppRequestState.Instance.EwfPageRequestState.SetStaticAndUpdateRegionState(
+					getStaticRegionContents( null ).contents,
+					Enumerable.Empty<( string, string )>().Materialize() );
 			}
 		}
 
@@ -842,7 +857,6 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 			    string.Equals( destinationUrl, AppRequestState.Instance.Url, StringComparison.Ordinal ) ) {
 				page.replaceUrlHandlers();
 				AppRequestState.Instance.SetNewUrlParameterValuesEffective( false );
-				AppRequestState.Instance.ClearUserAndImpersonator();
 				return ( nextPageObject = page ).processViewAndGetResponse( null );
 			}
 

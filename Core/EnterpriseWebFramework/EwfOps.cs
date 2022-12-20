@@ -110,7 +110,11 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 										ContentRootPath = EwfConfigurationStatics.AppConfiguration.Path
 									} );
 
-							builder.WebHost.ConfigureKestrel( options => { options.AllowSynchronousIO = true; } );
+							builder.WebHost.ConfigureKestrel(
+								options => {
+									options.Limits.MaxRequestBodySize = null;
+									options.AllowSynchronousIO = true;
+								} );
 							if( ConfigurationStatics.IsDevelopmentInstallation && EwfConfigurationStatics.AppConfiguration.UsesKestrel.Value )
 								builder.Services.AddResponseCompression( options => { options.EnableForHttps = true; } );
 
@@ -196,6 +200,9 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 								Translation.Init( () => "en-US" );
 								CssPreprocessingStatics.Init( globalInitializer.GetType().Assembly, ConfigurationStatics.AppAssembly );
 								ResourceBase.Init(
+									ResourceSerializationStatics.SerializeResource,
+									ConfigurationStatics.GetSystemLibraryProvider<SystemResourceSerializationProvider>( "ResourceSerialization" ),
+									providerGetter.GetProvider<AppResourceSerializationProvider>( "ResourceSerialization" ),
 									( requestTransferred, resource ) => {
 										if( requestTransferred ) {
 											var urlHandlers = new List<BasicUrlHandler>();
@@ -217,7 +224,8 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 								PageBase.Init(
 									( () => BasePageStatics.AppProvider.GetPageViewDataModificationMethod(),
 										() => BasePageStatics.AppProvider.JavaScriptDocumentReadyFunctionCall ),
-									BasicPageContent.GetContent );
+									BasicPageContent.GetContent,
+									RequestDispatchingStatics.RefreshRequestState );
 								HyperlinkBehaviorExtensionCreators.Init( ModalBox.GetBrowsingModalBoxOpenStatements );
 								FileUpload.Init( () => ( (BasicPageContent)PageBase.Current.BasicContent ).FormUsesMultipartEncoding = true );
 								ModalBox.Init( () => ( (BasicPageContent)PageBase.Current.BasicContent ).BrowsingModalBoxId );
@@ -275,7 +283,7 @@ namespace EnterpriseWebLibrary.EnterpriseWebFramework {
 										infos.Add( new StaticFiles.Third_party.Spin_js.SpinminJs() );
 										infos.Add( new ExternalResource( "//cdn.ckeditor.com/4.5.8/full/ckeditor.js" ) );
 										infos.Add( new ExternalResource( "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js" ) );
-										infos.Add( new ExternalResource( "https://instant.page/5.1.0" ) );
+										infos.Add( new StaticFiles.Instant_pageJs() );
 										if( includeStripeCheckout )
 											infos.Add( new ExternalResource( "https://checkout.stripe.com/checkout.js" ) );
 										infos.Add( new StaticFiles.CodeJs() );
