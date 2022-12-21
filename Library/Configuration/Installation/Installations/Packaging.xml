@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PackagingConfiguration xmlns="http://enterpriseweblibrary.org">
+	<SystemName>Sam's EWL</SystemName>
+	<SystemShortName>EwlSam</SystemShortName>
+</PackagingConfiguration>

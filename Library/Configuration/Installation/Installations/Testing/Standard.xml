@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <installationStandardConfiguration xmlns="http://redstapler.biz" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                                    xsi:schemaLocation="http://redstapler.biz http://ewl.enterpriseweblibrary.org/ConfigurationSchemas/InstallationStandard">
+	<rsisInstallationId>210695</rsisInstallationId>
 	<administrators>
 		<administrator>
 			<Name>Jane Doe</Name>
@@ -13,14 +14,11 @@
 		<InstallationTypeConfiguration xsi:type="IntermediateInstallationConfiguration">
 			<EmailFromName>Your Organization</EmailFromName>
 			<EmailFromAddress>contact@example.com</EmailFromAddress>
-			<EmailSendingService xsi:type="SendGrid">
-				<ApiKey>your-send-grid-api-key</ApiKey>
-			</EmailSendingService>
 			<WebApplications>
 				<Application>
-					<Name>Web Site</Name>
+					<Name>Website</Name>
 					<IisApplication xsi:type="VirtualDirectory">
-						<Site>intermediate.example.com</Site>
+						<Site>intermediate.enduracode.com</Site>
 					</IisApplication>
 				</Application>
 			</WebApplications>

@@ -1,6 +1,7 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
-<installationStandardConfiguration xmlns="http://redstapler.biz" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://redstapler.biz http://ewl.enterpriseweblibrary.org/ConfigurationSchemas/InstallationStandard">
-	<!--<rsisInstallationId>4</rsisInstallationId>-->
+﻿<?xml version="1.0" encoding="utf-8"?>
+<installationStandardConfiguration xmlns="http://redstapler.biz" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                   xsi:schemaLocation="http://redstapler.biz http://ewl.enterpriseweblibrary.org/ConfigurationSchemas/InstallationStandard">
+	<rsisInstallationId>210693</rsisInstallationId>
 	<administrators>
 		<administrator>
 			<Name>Sam Rueby</Name>
