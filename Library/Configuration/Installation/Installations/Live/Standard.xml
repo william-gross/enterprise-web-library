@@ -9,8 +9,8 @@
 		</administrator>
 	</administrators>
 	<installedInstallation>
-		<name>Live</name>
-		<shortName>Live</shortName>
+		<name>Sam Live</name>
+		<shortName>SamLive</shortName>
 		<InstallationTypeConfiguration xsi:type="LiveInstallationConfiguration">
 			<WebApplications>
 				<Application>

@@ -9,8 +9,8 @@
 		</administrator>
 	</administrators>
 	<installedInstallation>
-		<name>Testing</name>
-		<shortName>Testing</shortName>
+		<name>Sam Testing</name>
+		<shortName>SamTesting</shortName>
 		<InstallationTypeConfiguration xsi:type="IntermediateInstallationConfiguration">
 			<EmailFromName>Your Organization</EmailFromName>
 			<EmailFromAddress>contact@example.com</EmailFromAddress>
